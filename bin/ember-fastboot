@@ -10,7 +10,7 @@ var enforceHTTPS = function(req, res, next) {
     return next();
   } else {
     // Did not come over HTTPS. Fix that!
-    return res.redirect(301, join(`https://${req.hostname}${req.url}`));
+    return res.redirect(301, `https://${req.hostname}${req.url}`);
   }
 };
 var FastBootAppServer = require("fastboot-app-server");

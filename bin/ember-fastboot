@@ -1,30 +1,40 @@
 #!/usr/bin/env node
-'use strict';
+"use strict";
 
 // Provide a title to the process in `ps`
-process.title = 'ember-fastboot';
+process.title = "ember-fastboot";
 
-var FastBootAppServer = require('fastboot-app-server');
-var RSVP = require('rsvp');
-var parseArgs = require('minimist');
+var enforceHTTPS = function(req, res, next) {
+  // Header indicates edge server received request over HTTPS
+  if (req.headers["x-forwarded-proto"] === "https") {
+    return next();
+  } else {
+    // Did not come over HTTPS. Fix that!
+    return res.redirect(301, join(`https://${req.hostname}${req.url}`));
+  }
+};
+var FastBootAppServer = require("fastboot-app-server");
+var RSVP = require("rsvp");
+var parseArgs = require("minimist");
 
 var argOptions = {
-  default: { port: 3000, host: '::' }
+  default: { port: 3000, host: "::" }
 };
 
 var options = parseArgs(process.argv.slice(2), argOptions);
 var distPath = options._[0];
 
 if (!distPath) {
-  console.error("You must call ember-fastboot with the path of a fastboot-dist directory:\n\n" +
-      "  ember-fastboot fastboot-dist");
+  console.error(
+    "You must call ember-fastboot with the path of a fastboot-dist directory:\n\n" + "  ember-fastboot fastboot-dist"
+  );
   process.exit(1);
 }
 
 var notifier = {
   subscribe: function(notify) {
-    process.on('SIGUSR1', function() {
-      console.log('Reloading Ember app from ' + distPath);
+    process.on("SIGUSR1", function() {
+      console.log("Reloading Ember app from " + distPath);
 
       notify();
     });
@@ -36,9 +46,22 @@ var notifier = {
 var server = new FastBootAppServer({
   distPath: distPath,
   notifier: notifier,
-  gzip: true
+  gzip: true,
+  beforeMiddleware(app) {
+    app.use((req, res, next) => {
+      if (
+        process.env.DISABLE_FORCE_HTTPS || // Ability to disable force HTTPS via env
+        req.headers["user-agent"].indexOf("HealthChecker") >= 0
+      ) {
+        // EBS health over HTTP
+        return next(); // Proceed as planned (http or https -- whatever was asked for)
+      } else {
+        return enforceHTTPS(req, res, next); // Middleware to force all other HTTP --> HTTPS
+      }
+    });
+  }
 });
 
-console.log('Booting Ember app...');
+console.log("Booting Ember app...");
 
 server.start();

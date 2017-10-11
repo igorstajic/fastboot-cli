@@ -16,11 +16,7 @@
     "type": "git",
     "url": "git+https://github.com/ember-fastboot/fastboot-cli.git"
   },
-  "keywords": [
-    "ember",
-    "fastboot",
-    "cli"
-  ],
+  "keywords": ["ember", "fastboot", "cli"],
   "author": "Tom Dale <tom@tomdale.net>",
   "license": "MIT",
   "bugs": {
@@ -36,7 +32,7 @@
     "temp": "^0.8.3"
   },
   "dependencies": {
-    "fastboot-app-server": "^1.0.0-beta.2",
+    "fastboot-app-server": "^1.0.2",
     "minimist": "^1.2.0",
     "rsvp": "^3.2.1"
   }
